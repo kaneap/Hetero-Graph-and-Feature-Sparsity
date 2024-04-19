@@ -16,8 +16,12 @@ class HeteroGNN(torch.nn.Module):
 
         self.lin = Linear(hidden_channels, out_channels)
 
-    def forward(self, x_dict, edge_index_dict):
+    def get_embedding(self, x_dict, edge_index_dict):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict)
             x_dict = {key: F.leaky_relu(x) for key, x in x_dict.items()}
+        return x_dict
+
+    def forward(self, x_dict, edge_index_dict):
+        x_dict = self.get_embedding(x_dict, edge_index_dict)
         return self.lin(x_dict['author'])

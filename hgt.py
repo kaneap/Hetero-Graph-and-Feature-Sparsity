@@ -17,7 +17,7 @@ class HGT(torch.nn.Module):
 
         self.lin = Linear(hidden_channels, out_channels)
 
-    def forward(self, x_dict, edge_index_dict):
+    def get_embedding(self, x_dict, edge_index_dict):
         x_dict = {
             node_type: self.lin_dict[node_type](x).relu_()
             for node_type, x in x_dict.items()
@@ -25,5 +25,8 @@ class HGT(torch.nn.Module):
 
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict)
-
+        return x_dict
+    
+    def forward(self, x_dict, edge_index_dict):
+        x_dict = self.get_embedding(x_dict, edge_index_dict)
         return self.lin(x_dict['author'])
