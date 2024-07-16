@@ -3,7 +3,7 @@ from torch_geometric.nn import HeteroConv, Linear, SAGEConv
 import torch.nn.functional as F
 
 class HeteroGNN(torch.nn.Module):
-    def __init__(self, metadata, hidden_channels, out_channels, num_layers):
+    def __init__(self, metadata, hidden_channels, out_channels, num_layers, target_node_type):
         super().__init__()
 
         self.convs = torch.nn.ModuleList()
@@ -15,6 +15,7 @@ class HeteroGNN(torch.nn.Module):
             self.convs.append(conv)
 
         self.lin = Linear(hidden_channels, out_channels)
+        self.target_node_type = target_node_type
 
     def get_embedding(self, x_dict, edge_index_dict):
         for conv in self.convs:
@@ -24,4 +25,4 @@ class HeteroGNN(torch.nn.Module):
 
     def forward(self, x_dict, edge_index_dict):
         x_dict = self.get_embedding(x_dict, edge_index_dict)
-        return self.lin(x_dict['author'])
+        return self.lin(x_dict[self.target_node_type])

@@ -1,0 +1,35 @@
+ Increasing Levels of feature sparsity with feature_enhancement
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --remove_features 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 --remove_edges 0.0 0.25 0.5 --model gat hetero_conv -e 5000 --comment "Increasing Levels of feature sparsity"
+
+Increasing Levels of edge sparsity with graph_enhancement
+python graph-learning/experiment_runner.py --graph_enhancement 0 1 --remove_features 0.0 0.25 0.5 --remove_edges 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 -m hetero_conv gat -e 5000 --comment "increasing levels of graph sparsity"
+
+Test with different Seed for feature_enhancement
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --remove_features 0.4 0.5 0.6 0.7 --model gat -e 5000 --seed 42 43 44 45 46 47 --comment "Test various seeds with ef"
+
+Test both increasing sparsity
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.0 --remove_edges 0.0 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.1 --remove_edges 0.1 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.2 --remove_edges 0.2 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.3 --remove_edges 0.3 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.4 --remove_edges 0.4 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.5 --remove_edges 0.5 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.6 --remove_edges 0.6 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.7 --remove_edges 0.7 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.8 --remove_edges 0.8 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 0.9 --remove_edges 0.9 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --graph_enhancement 0 1 --remove_features 1.0 --remove_edges 1.0 --model gat hetero_conv -e 5000 --comment "increasing both sparsity"
+
+Test Link prediction method before/after/without
+python graph-learning/experiment_runner.py --graph_enhancement 1 --link_prediction 0 1 2 --remove_features 0 --remove_edges 0.0 0.25 0.5 --model gat hetero_conv -e 5000 --comment "Test Link prediction method before/after/without" 
+
+
+debug
+python graph-learning/experiment_runner.py --dataset_name dblp --model gat --batch_size=64 --number_of_epochs 5000 --graph_enhancement=1 --feature_enhancement=2 --comment='debug' --remove_features 0.1 --remove_edges 0.1
+
+Test for Presentation
+python graph-learning/experiment_runner.py --feature_enhancement 0 1 2 3 --remove_features 0.4 0.5 0.6 0.7 --model gat -e 5000 --comment "Test various seeds with ef"
+
+
+For Presentation
+python graph-learning/experiment_runner.py --feature_enhancement 0 3 --graph_enhancement 0 1 --remove_features 0.5 --remove_edges 0.5 --model gat hetero_conv -e 5000 --deterministic 0 --comment "for presentation"
