@@ -7,10 +7,13 @@ def remove_features(data, probability, node_types=None):
     """
     if node_types is None:
         node_types = ['author', 'paper', 'term']
+    masks = {}
     for node_type in node_types:
         node_features = data[node_type].x
-        data[node_type].x = torch.where(torch.rand_like(node_features) < probability, torch.zeros_like(node_features), node_features)
-    return data
+        mask = torch.rand_like(node_features) < probability
+        data[node_type].x = torch.where(mask, torch.zeros_like(node_features), node_features)
+        masks[node_type] = mask
+    return data, masks
 
 
 # %%
@@ -26,9 +29,6 @@ def randomize_features(data, probability, node_types=None):
         random_ones = torch.where(torch.rand_like(node_features) < feature_prob, torch.ones_like(node_features), torch.zeros_like(node_features))
         data[node_type].x = torch.where(torch.rand_like(node_features) < probability, random_ones, node_features)
     return data
-
-
-
 
 
 def remove_edges(data, probability, edge_types=None, rev_edge_types=None):

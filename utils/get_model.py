@@ -4,7 +4,7 @@ from modules.hgt import HGT
 from modules.gat import GAT
 from torch_geometric import nn
 
-def get_model(model_name, data, device, target_node_type, lr=0.005, weight_decay=0.001, out_channels=4):
+def get_model(model_name, data, device, target_node_type, lr=0.005, weight_decay=0.001):
     num_classes = len(torch.unique(data[target_node_type].y))
     if model_name == 'hetero_conv':
         model = HeteroGNN(data.metadata(), hidden_channels=50, out_channels=num_classes, num_layers=2, target_node_type=target_node_type)

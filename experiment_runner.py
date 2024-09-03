@@ -70,6 +70,9 @@ from utils import get_dataset
 from utils.get_model import get_model
 from enhancements.new_edges import add_new_edges
 from enhancements.compress_add import compress_add_feats
+from enhancements.feature_prop_2 import propagate_features, propagate_features_homogeneous
+from enhancements.orphan_fixer import add_edge_to_orphans
+from enhancements.similar_nodes_connector import connect_similar_nodes
 from link_pred_enhancement import predict_links
 from utils import graph_polluters
 from enhancements import apriori
@@ -102,9 +105,9 @@ def setup_config(config):
     config._parser.add("-c", "--comment", default='', type=str, help="A comment to add to the rows of the results")
     config._parser.add("-ap", "--apriori", default=0, type=int, help="whether to use apriori enhancement", nargs='*')
     config._parser.add("-pca", "--pca", default=0, type=int, help="whether to use pca enhancement", nargs='*')
-    # add param to save
-    
-
+    config._parser.add("-pf", "--propagate_features", default=0, type=int, help="whether to use feature propagation", nargs='*')
+    config._parser.add("-ce", "--continuous_enhancement", default=0, type=int, help="number of iterations to do continuous enhancement", nargs='*')
+    config._parser.add("-fo", "--fix_orphans", default=0, type=int, help="whether to fix orphan nodes", nargs='*')
 
     config.parse()
 
@@ -172,26 +175,49 @@ def run_pipeline(args, experiment_name):
     
     exp_starttime = datetime.now()
     data = get_dataset.get_dataset(args.dataset_name)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     target_node_type = get_dataset.get_target_node_type(args.dataset_name)
 
     # pollute the data
-    if args.remove_features > 0:
-        node_types_to_remove = get_dataset.get_node_types_to_remove(args.dataset_name)
-        data = graph_polluters.remove_features(data, args.remove_features, node_types_to_remove)
+    node_types_to_remove = get_dataset.get_node_types_to_remove(args.dataset_name)
+    data, masks = graph_polluters.remove_features(data, args.remove_features, node_types_to_remove)
+    # masks represents the edges with features removed
     if args.remove_edges > 0:
         edge_type_to_remove, rev_edge_type_to_remove = get_dataset.get_edge_types_to_remove(args.dataset_name)
         data = graph_polluters.remove_edges(data, args.remove_edges, edge_type_to_remove, rev_edge_type_to_remove)
 
-    #conditionally apply enhancement
+
     edge_type_to_remove, lp_rev_edge_type = get_dataset.get_lp_edge_types(args.dataset_name)
+
+    if args.fix_orphans:
+        add_edge_to_orphans(data, ('author','to','paper'), ('paper','to','author'))
+
+    if args.propagate_features:
+            propagate_features(data, masks, 'author', ('author','to','paper'), ('paper','to','author'), iters=40)
+            propagate_features(data, masks, 'paper', ('paper','to','author'), ('author','to','paper'), iters=40)
+            propagate_features(data, masks, 'term', ('term','to','paper'), ('paper','to','term'), iters=40)
+    '''
+    for i in range(args.continuous_enhancement):
+        connect_similar_nodes(data, 'author', ('author','sim','author'),0.3)
+        print(data)
+        propagate_features_homogeneous(data, masks, 'author', ('author','sim','author'), iters=40)
+    '''
+
+
+    if args.graph_enhancement:
+        new_edge_types = add_new_edges(data, device, target_node_type, num_paths=1)
+        
+        for edge_type in new_edge_types:
+            node_type,_,_ = edge_type
+            propagate_features_homogeneous(data, masks, node_type, edge_type, iters=40, device=device)
+        for i in range (40):
+            connect_similar_nodes(data, 'author', ('author','sim','author'),0.3)
+            propagate_features_homogeneous(data, masks, 'author', ('author','sim','author'), iters=1, device=device)
     if args.link_prediction == 1:
         data = predict_links(data, device, threshold=0.9, edge_type=edge_type_to_remove, rev_edge_type=lp_rev_edge_type)
     if args.feature_enhancement:
         node_types_to_enhance = get_dataset.get_node_types_to_enhance(args.dataset_name)
         data = compress_add_feats(data, node_types_to_enhance, method=args.feature_enhancement)
-    if args.graph_enhancement:
-        add_new_edges(data, device, target_node_type, num_paths=1)
     if args.link_prediction == 2:
         data = predict_links(data, device, threshold=0.9,  edge_type=edge_type_to_remove, rev_edge_type=lp_rev_edge_type)
     if args.apriori:
@@ -202,8 +228,14 @@ def run_pipeline(args, experiment_name):
         data['term'].x = PCA(18).to(device).fit_transform(data['term'].x)
         data['paper'].x = PCA(18).to(device).fit_transform(data['paper'].x)
 
+    
+
+
     model, opimizer = get_model(args.model, data, device, target_node_type, args.learning_rate, args.weight_decay)
+
     results = trainer.train(data, device, model, opimizer, args.number_of_epochs, experiment_name, target_node_type)
+    #results = trainer.train_2(data, device, args, experiment_name, target_node_type)
+
     results = results | args.__dict__
     results['args'] = str(args)
     results['experiment_duration'] = str(exp_starttime - datetime.now())
@@ -217,13 +249,14 @@ schema_columns = ['test_prec', 'test_recall', 'test_f1', 'test_acc',
                    'val_acc', 'val_f1', 'val_loss', 'dataset_name', 
                    'model', 'batch_size', 'number_of_epochs', 'best_epoch',
                    'experiment_duration', 'learning_rate', 'weight_decay', 'remove_features', 
-                   'remove_edges', 'graph_enhancement', 'feature_enhancement', 'link_prediction', 
+                   'remove_edges', 'graph_enhancement', 'feature_enhancement', 'link_prediction',
+                   'continucus_enhancement',
                    'predefined_enhancement', 'experiment_name', 'date_time', 'comment', 'args']
 
 # %%
 # Here we start the evaluation
 if __name__ == "__main__":
-    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     config = Configuration() 
     setup_config(config)
     evaluation_starttime = str(datetime.now())
